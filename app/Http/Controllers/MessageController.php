@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use App\Models\Message;
+use App\Events\MessageSend;
 
 class MessageController extends Controller
 {
@@ -23,13 +24,20 @@ class MessageController extends Controller
 
     public function store(Request $request): void
     {
-        $message = $request->validate([
-            'content' => 'string|required'
+        $validated = $request->validate([
+            'content' => 'string|required',
+            'receiver_id' => 'required|exists:users,id'
         ]);
 
-        Message::create([
-            'content' => $message['content'],
-            'user_id' => auth()->id()
+        $message = Message::create([
+            'content' => $validated['content'],
+            'user_id' => auth()->id(),
+            'receiver_id' => $validated['receiver_id'],
         ]);
+
+        $message->save();
+        $message->load(['user:id,name', 'receiver:id,name']);
+        
+        MessageSend::dispatch($message);
     }
 }

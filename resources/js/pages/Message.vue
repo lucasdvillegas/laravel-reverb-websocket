@@ -5,6 +5,9 @@ import { useForm } from "vee-validate";
 import { ref } from "vue";
 import { useInitials } from "@/composables/useInitials";
 
+// Laravel Reverb - Echo-vue
+import { useEcho } from "@laravel/echo-vue";
+
 import * as yup from "yup";
 import es from "yup-es";
 
@@ -41,6 +44,7 @@ const page = usePage();
 const props = defineProps<{
     messages: Messages[];
 }>();
+const messageList = ref(props.messages);
 
 const saving = ref(false);
 const userId = ref(page.props.auth.user.id);
@@ -55,12 +59,21 @@ const { handleSubmit, defineField, errors, setErrors } = useForm({
     validationSchema: schema,
     initialValues: {
         content: "",
+        receiver_id: 0, // TODO: Traer desde listado de usuarios
     },
 });
 
 const [content] = defineField("content");
 
 const onSubmit = handleSubmit((values) => {
+    // TODO: Traer desde listado de usuarios
+    // Si lo envía user_id 1 lo recibe user_id 2.
+    if (userId.value === 1) {
+        values.receiver_id = 2;
+    } else {
+        values.receiver_id = 1;
+    }
+
     saving.value = true;
 
     router.post(message(), values, {
@@ -77,6 +90,10 @@ const onSubmit = handleSubmit((values) => {
         },
     });
 });
+
+useEcho(`chat.${userId.value}`, ".message.sent", (e: any) => {
+    messageList.value.push(e.message);
+});
 </script>
 
 <template>
@@ -88,7 +105,7 @@ const onSubmit = handleSubmit((values) => {
         <ScrollArea class="h-[70vh] w-full mb-auto">
             <div class="flex flex-col gap-4">
                 <Message
-                    v-for="msg in messages"
+                    v-for="msg in messageList"
                     :key="msg.id"
                     :align="msg.user_id === userId ? 'end' : undefined"
                 >

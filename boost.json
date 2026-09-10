@@ -10,6 +10,8 @@
         "testing-best-practices",
         "wayfinder-development",
         "inertia-vue-development",
-        "tailwindcss-development"
+        "tailwindcss-development",
+        "echo-vue-development",
+        "echo-development"
     ]
 }
