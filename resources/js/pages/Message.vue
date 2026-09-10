@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { Head, router, usePage } from "@inertiajs/vue3";
-import { message } from "@/routes";
 import { useForm } from "vee-validate";
 import { ref } from "vue";
 import { useInitials } from "@/composables/useInitials";
@@ -14,8 +13,8 @@ import es from "yup-es";
 yup.setLocale(es);
 
 // shadcn components
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Bubble, BubbleContent, BubbleGroup } from "@/components/ui/bubble";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Bubble, BubbleContent } from "@/components/ui/bubble";
 import {
     Message,
     MessageAvatar,
@@ -23,29 +22,32 @@ import {
 } from "@/components/ui/message";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-
 import { ArrowUpIcon } from "@lucide/vue";
 import { Button } from "@/components/ui/button";
 
 import type { Messages } from "@/types/message";
+import { store as messageStore } from "@/routes/message";
+import { index as userIndex } from "@/routes/user";
+
+const page = usePage();
+const props = defineProps<{
+    conversation: { id: number; user_one_id: number; user_two_id: number };
+    messages: Messages[];
+    chatUser: { id: number; name: string; email: string };
+}>();
 
 defineOptions({
     layout: {
         breadcrumbs: [
             {
-                title: "Message",
-                href: message(),
+                title: "Chat",
+                href: userIndex(),
             },
         ],
     },
 });
 
-const page = usePage();
-const props = defineProps<{
-    messages: Messages[];
-}>();
 const messageList = ref(props.messages);
-
 const saving = ref(false);
 const userId = ref(page.props.auth.user.id);
 
@@ -55,35 +57,26 @@ const schema = yup.object({
     content: yup.string().required().label("Content"),
 });
 
-const { handleSubmit, defineField, errors, setErrors } = useForm({
+const { handleSubmit, defineField, setErrors } = useForm({
     validationSchema: schema,
     initialValues: {
         content: "",
-        receiver_id: 0, // TODO: Traer desde listado de usuarios
+        conversation_id: props.conversation.id,
     },
 });
 
 const [content] = defineField("content");
 
 const onSubmit = handleSubmit((values) => {
-    // TODO: Traer desde listado de usuarios
-    // Si lo envía user_id 1 lo recibe user_id 2.
-    if (userId.value === 1) {
-        values.receiver_id = 2;
-    } else {
-        values.receiver_id = 1;
-    }
-
     saving.value = true;
 
-    router.post(message(), values, {
+    router.post(messageStore(), values, {
         preserveScroll: true,
         onSuccess: () => {
             content.value = "";
         },
         onError: (errors) => {
             setErrors(errors);
-            console.log(errors);
         },
         onFinish: () => {
             saving.value = false;
@@ -91,13 +84,20 @@ const onSubmit = handleSubmit((values) => {
     });
 });
 
-useEcho(`chat.${userId.value}`, ".message.sent", (e: any) => {
-    messageList.value.push(e.message);
-});
+// Escuchar el evento declarado en el routes\channels.php
+useEcho(
+    `chat.conversation.${props.conversation.id}`,
+    ".message.sent",
+    (e: any) => {
+        if (!messageList.value.some((msg) => msg.id === e.message.id)) {
+            messageList.value.push(e.message);
+        }
+    },
+);
 </script>
 
 <template>
-    <Head title="Message" />
+    <Head :title="`Chat con ${props.chatUser.name}`" />
 
     <div
         class="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4"

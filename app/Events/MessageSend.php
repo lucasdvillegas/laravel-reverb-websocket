@@ -30,9 +30,7 @@ class MessageSend implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            // TODO: Corregir migraciones para crear una sala 
-            new PrivateChannel('chat.' . $this->message->user_id),     // Canal del que envía Usuario A
-            new PrivateChannel('chat.' . $this->message->receiver_id), // Canal del que recibe Usuario B
+            new PrivateChannel('chat.conversation.' . $this->message->conversation_id),
         ];
     }
 

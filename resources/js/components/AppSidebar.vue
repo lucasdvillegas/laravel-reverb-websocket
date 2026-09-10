@@ -15,7 +15,7 @@ import {
     SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { dashboard } from "@/routes";
-import { message } from "@/routes";
+import { index as userIndex } from "@/routes/user";
 
 import type { NavItem } from "@/types";
 
@@ -25,9 +25,14 @@ const mainNavItems: NavItem[] = [
         href: dashboard(),
         icon: LayoutGrid,
     },
+    //{
+    //    title: "Message",
+    //    href: message(),
+    //    icon: LayoutGrid,
+    //},
     {
-        title: "Message",
-        href: message(),
+        title: "Usuarios",
+        href: userIndex(),
         icon: LayoutGrid,
     },
 ];
