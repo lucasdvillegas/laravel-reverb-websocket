@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, Link } from "@inertiajs/vue3";
 import { MessageSquareText } from "@lucide/vue";
+import { usePresenceStore } from "@/stores/presence";
 
 import {
     Table,
@@ -28,6 +29,9 @@ defineOptions({
 const props = defineProps<{
     users: User[];
 }>();
+
+// Instancia el store para acceder reactivamente a los IDs online
+const presenceStore = usePresenceStore();
 </script>
 
 <template>
@@ -38,6 +42,7 @@ const props = defineProps<{
             <Table>
                 <TableHeader>
                     <TableRow>
+                        <TableHead class="px-4 py-2">Estado</TableHead>
                         <TableHead class="px-4 py-2">Nombre</TableHead>
                         <TableHead class="px-4 py-2">Email</TableHead>
                         <TableHead class="px-4 py-2">Creado</TableHead>
@@ -47,7 +52,33 @@ const props = defineProps<{
 
                 <TableBody>
                     <TableRow v-for="item in props.users" :key="item.id">
-                        <TableCell class="px-4 py-2">{{ item.name }}</TableCell>
+                        <TableCell class="px-4 py-2">
+                            <div class="flex items-center gap-2">
+                                <span
+                                    class="h-2.5 w-2.5 rounded-full"
+                                    :class="
+                                        presenceStore.onlineIds.includes(
+                                            item.id,
+                                        )
+                                            ? 'bg-green-500'
+                                            : 'bg-red-500'
+                                    "
+                                ></span>
+                                <span class="text-xs text-muted-foreground">
+                                    {{
+                                        presenceStore.onlineIds.includes(
+                                            item.id,
+                                        )
+                                            ? "Online"
+                                            : "Offline"
+                                    }}
+                                </span>
+                            </div>
+                        </TableCell>
+
+                        <TableCell class="px-4 py-2 font-medium">{{
+                            item.name
+                        }}</TableCell>
                         <TableCell class="px-4 py-2">{{
                             item.email
                         }}</TableCell>
@@ -56,8 +87,8 @@ const props = defineProps<{
                                 new Date(item.created_at).toLocaleDateString(
                                     "es",
                                 )
-                            }}</TableCell
-                        >
+                            }}
+                        </TableCell>
                         <TableCell>
                             <div class="flex justify-end gap-2 pr-2">
                                 <Link
@@ -72,7 +103,7 @@ const props = defineProps<{
 
                     <TableRow v-if="users.length === 0">
                         <TableCell
-                            colspan="4"
+                            colspan="5"
                             class="py-10 text-center text-muted-foreground"
                         >
                             No hay usuarios disponibles.
